@@ -5,6 +5,7 @@ backpack = Backpack()
 pickaxe = Pickaxe()
 player = Player(backpack, pickaxe)
 board = Map()
+board.load_map(filename="level1.txt")
 
 def show_main_menu():
     print("--- Main Menu ----")
@@ -49,19 +50,133 @@ def shop():
         case "B":
             # can buy
             if player.GP >= player.backpack.upgrade_price():
+                player.GP -= player.backpack.upgrade_price() 
                 player.backpack.upgrade()
                 print("Congratulations! You can now carry {} items!".format(player.backpack.max_capacity))
             else:
                 print("Insufficient GP.")
+            shop()
+
         case "L":
             # leave shop and return to town menu 
             town(init=False)
+
+def use_portal():
+    print("You place your portal stone here and zap back to town.")
+                
+    player.portal = player.pos
+
+    if len(player.backpack.contents) > 0:
+        player.sell()
+    else:
+        print("You don't have anything to sell.")
+
+    # start next day
+    player.day += 1
+    player.turns = player.TURNS_PER_DAY
+    
+
+def enter_mine():
+    print("DAY", player.day)
+
+    board.draw_viewport(player.pos)
+
+    print("Turns left: {turns} \t Load: {curr_load}/{max_load} \t Steps: {steps}".format(turns=player.turns, curr_load=player.backpack.capacity(), max_load=player.backpack.max_capacity, steps=player.steps))
+    print("(WASD) to move")
+    print("(M)ap, (I)nformation, (P)ortal, (Q)uit to main menu")
+
+    action = input("Action? ").upper()
+
+    match action:
+        case "W" | "A" | "S" | "D":
+            # move the player
+            # decrement turns and steps regardless if move is valid
+            player.turns -= 1
+            player.steps += 1
+            
+            new_pos = player.move(action, board.width, board.height)
+            can_move = True
+
+            if new_pos == float("inf"):
+                # cannot move here
+                print("That's outside the border, so you can't go that way")
+            else:
+                cell = board.board[int(new_pos.real)][int(new_pos.imag)]
+
+                # if player steps on a mineral
+                if cell in "CSG":
+                    mineral = "copper" if cell == "C" else "silver" if cell == "S" else "gold"
+
+                    # check if backpack is full
+                    if player.backpack.capacity() == player.backpack.max_capacity:
+                        can_move = False
+                        print("You can't carry any more, so you can't go that way.")
+                    
+                    # check if pickaxe can mine this item
+                    elif mineral not in player.pickaxe.can_mine():
+                        can_move = False
+                        print("Cannot mine this item, upgrade your pickaxe first!")
+                    
+                    else:
+                        # can mine item
+                        quantity = player.mine_mineral(mineral)
+                        # remove ore from the map
+                        board.board[int(new_pos.real)][int(new_pos.imag)] = " "
+
+                        print("---------------------------------------------------")
+                        print("You mined {quantity} piece(s) of {mineral}.".format(quantity=quantity, mineral=mineral))
+
+                        if quantity > player.backpack.remaining_capacity():
+                            print("... but you can only carry {} more piece(s)!".format(player.backpack.remaining_capacity()))
+                            quantity = player.backpack.remaining_capacity()
+
+                        player.backpack.add(quantity, mineral)
+                        
+                if can_move:
+                    # set the new pos of the player
+                    player.pos = new_pos
+                    # update explored cells
+                    board.explored.add(player.pos)
+                    for i in range(-1, 2):
+                        for j in range(-1, 2):
+                            if 0 <= int(player.pos.real + i) < board.height or 0 <= int(player.pos.imag + j) < board.width:
+                                board.explored.add(player.pos + i + j * 1j)
+
+                    # if player steps on T, will return to town 
+                    if player.pos == player.TOWN_POS:
+                        town(init=False)
+
+
+            # use portal 
+            if player.turns == 0:
+                print("You are exhausted.")
+                use_portal()
+                town(init=False)
+            else:
+                enter_mine()
+        case "M":
+            # display the map
+            board.draw_map(player_pos=player.pos, portal=player.portal)
+            # show ui for entering mine again
+            enter_mine()
+        case "I":
+            player.display_info(in_town=False)
+            enter_mine()
+        case "P":
+            # place a portal stone 
+            use_portal()
+            town(init=False)
+        case "Q":
+            main()
+        case _:
+            print("Invalid input")
 
 def town(init):
     if init:
         name = input("Greetings, miner! What is your name? ")
         print("Pleased to meet you, {}. Welcome to Sundrop Town!".format(name))
         player.name = name
+        # TODO: INPUT VALIDATION FOR NAME
 
     show_town_menu()
 
@@ -72,17 +187,21 @@ def town(init):
             shop()
         case "I":
             # display player information
-            player.display_info()
+            player.display_info(in_town=True)
             town(init=False)
         case "M":
-            # load the board if this is the first time
-            if len(board.board) == 0:
-                board.load_map(filename="level1.txt")
-
-            board.draw_map(player.pos)
+            # display the map
+            # set player_pos to 0+0j as player is back in town
+            board.draw_map(player_pos=0+0j, portal=player.portal)
             town(init=False)
         case "E":
-            return NotImplemented
+            # enter mine 
+            print("---------------------------------------------------")
+            # align the day count in the middle
+            print("{:^51}".format("DAY " + str(player.day)))
+            print("---------------------------------------------------")
+            enter_mine() 
+
         case "V":
             return NotImplemented
         case "Q":
@@ -108,6 +227,7 @@ def main():
             # invalid input 
             return NotImplemented
 
+# starting text
 print("---------------- Welcome to Sundrop Caves! ----------------")
 print("You spent all your money to get the deed to a mine, a small backpack, a simple pickaxe and a magical portal stone.")
 print()
