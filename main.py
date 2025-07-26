@@ -61,8 +61,7 @@ def show_scores():
     scores = file.read().strip().split("\n")
     
     # parse score
-    # format of score: -39989.0030 -> 3 is days, limit-steps is 9989, 30 is GP
-    # use limit-steps so that min steps in ranked higher
+    # format of score: -10007.052 -> 1 is days, steps is 7, 520 is score
     print("High Scores: ")
     for i in range(len(scores)):
         # type cast and * -1 to make it positive
@@ -102,6 +101,10 @@ def show_shop_menu():
 
     if player.pickaxe.level < 3:
         print("(P)ickaxe upgrade to Level {} to mine {} ore for {} GP".format(player.pickaxe.level + 1, player.pickaxe.MINERALS[player.pickaxe.level], player.pickaxe.upgrade_price()))
+    
+    # Allow players to buy a magic torch for 50 GP that increases the size of the viewport to 5x5
+    if not player.torch:
+        print("Buy a Magical (T)orch for {} GP that increases the size of the viewport to 5x5".format(player.TORCH_PRICE))
 
     print("(B)ackpack upgrade to carry {capacity} items for {price} GP".format(capacity = player.backpack.max_capacity + 2, price=player.backpack.upgrade_price()))
 
@@ -116,7 +119,7 @@ def shop():
     shop_choice = input("Your choice? ").upper()
             
     # input validation
-    while len(shop_choice) == 0 or shop_choice not in "BLP":
+    while len(shop_choice) == 0 or shop_choice not in "BLPT":
        print_colour("Invalid input. Input should be either (B) or (L).", "red")
        shop_choice = input("Your choice? ").upper() 
 
@@ -143,6 +146,16 @@ def shop():
                 print_colour("Congratulations! You can now carry {} items!".format(player.backpack.max_capacity), "green")
             else:
                 print_colour("Insufficient GP.", "red")
+            shop()
+
+        case "T":
+            # can buy
+            if player.GP >= player.TORCH_PRICE:
+                player.GP -= player.TORCH_PRICE
+                player.torch = True
+                print_colour("Congratulations! Your viewport has now been expanded to 5x5.", "green")
+            else:
+               print_colour("Insufficient GP.", "red") 
             shop()
 
         case "L":
@@ -179,7 +192,7 @@ def use_portal():
 def enter_mine():
     print("DAY", player.day)
 
-    board.draw_viewport(player.pos)
+    board.draw_viewport(player.pos, player.torch)
 
     print("Turns left: {turns} \t Load: {curr_load}/{max_load} \t Steps: {steps}".format(turns=player.turns, curr_load=player.backpack.capacity(), max_load=player.backpack.max_capacity, steps=player.steps))
     print("(WASD) to move")

@@ -63,8 +63,9 @@ class Player:
     TURNS_PER_DAY = 20
     # set town pos to (0, 0)
     TOWN_POS = 0 + 0j
+    TORCH_PRICE = 50
 
-    def __init__(self, backpack: Backpack, pickaxe: Pickaxe, name="", pos = TOWN_POS, GP = 500, day = 1, steps = 0, turns = TURNS_PER_DAY, portal=None):
+    def __init__(self, backpack: Backpack, pickaxe: Pickaxe, name="", pos = TOWN_POS, GP = 0, day = 1, steps = 0, turns = TURNS_PER_DAY, portal=None, torch=False):
         self.pos = pos
         self.backpack = backpack
         self.GP = GP
@@ -74,6 +75,7 @@ class Player:
         self.pickaxe = pickaxe
         self.name = name
         self.portal = portal
+        self.torch = torch
    
     def display_info(self, in_town):
         print("----- Player Information -----")
@@ -194,12 +196,21 @@ class Map:
 
         map_file.close()
     
-    def draw_viewport(self, pos):
-        print("+---+")
-        # loop through the coords -1, 0, 1
-        for i in range(-1, 2):
+    def draw_viewport(self, pos, torch):
+        if torch:
+            # expand view range
+            # loop through the coords -2, -1, 0, 1, 2
+            view_range = range(-2, 3)
+            row_header = "+-----+"
+        else:
+            # loop through the coords -1, 0, 1
+            view_range = range(-1, 2) 
+            row_header = "+---+"
+
+        print(row_header)
+        for i in view_range:
             row = "|"
-            for j in range(-1, 2):
+            for j in view_range:
                 if i == 0 and j == 0:
                     # player pos 
                     row += "M"
@@ -210,7 +221,7 @@ class Map:
                     row += self.board[int(pos.real + i)][int(pos.imag + j)]
             row += "|"
             print(row)
-        print("+---+")
+        print(row_header)
     
     def draw_map(self, player_pos, portal):
         # print borders 
