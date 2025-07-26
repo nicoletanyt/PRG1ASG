@@ -38,7 +38,7 @@ def save_score():
 
     # calculate score
     # use - day to reverse it such that fewer days are ranked higher
-    score = -(player.day * LIMIT + (LIMIT - player.steps) + (player.GP)/LIMIT)
+    score = -(player.day * LIMIT + player.steps + (player.GP)/LIMIT)
 
     scores.append(score)
     
@@ -69,7 +69,7 @@ def show_scores():
         curr = float(scores[i]) * -1
 
         days = int(curr // LIMIT)
-        steps = LIMIT - int(curr % LIMIT)
+        steps = int(curr % LIMIT)
         gp = int(curr % 1 * LIMIT)
         print("{}. Days: {}\tSteps: {}\tGP: {}".format(i + 1, days, steps, gp))
     
