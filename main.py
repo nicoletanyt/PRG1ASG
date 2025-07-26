@@ -1,6 +1,6 @@
 # Nicole Tan (IT01)
 
-from utilities import Pickaxe, Backpack, Player, Map
+from utilities import Pickaxe, Backpack, Player, Map, print_colour
 import pickle
 
 # init objects
@@ -69,6 +69,11 @@ def shop():
     show_shop_menu()
     shop_choice = input("Your choice? ").upper()
             
+    # input validation
+    while len(shop_choice) == 0 or shop_choice not in "BL":
+       print_colour("Invalid input. Input should be either (B) or (L).", "red")
+       shop_choice = input("Your choice? ").upper() 
+
     match shop_choice:
         case "B":
             # can buy
@@ -96,7 +101,7 @@ def use_portal():
             global win
             win = True
             print("-------------------------------------------------------------")
-            print("Woo-hoo! Well done, {name}, you have {GP} GP!".format(name=player.name, GP=player.GP))
+            print_colour("Woo-hoo! Well done, {name}, you have {GP} GP!".format(name=player.name, GP=player.GP), "green")
             print("You now have enough to retire and play video games every day.")
             print("And it only took you {days} days and {steps} steps! You win!".format(days=player.day, steps=player.steps))
             print()
@@ -119,6 +124,11 @@ def enter_mine():
 
     action = input("Action? ").upper()
 
+    # input validation
+    while len(action) == 0 or  action not in "WASDMIPQ":
+        print_colour("Invalid input. Choice should be either (W), (A), (S), (D), (M), (I), (P) or (Q)", "red")
+        action = input("Action? ").upper()    
+
     match action:
         case "W" | "A" | "S" | "D":
             # move the player
@@ -131,7 +141,7 @@ def enter_mine():
 
             if new_pos == float("inf"):
                 # cannot move here
-                print("That's outside the border, so you can't go that way")
+                print_colour("That's outside the border, so you can't go that way", "red")
             else:
                 cell = board.board[int(new_pos.real)][int(new_pos.imag)]
 
@@ -142,12 +152,12 @@ def enter_mine():
                     # check if backpack is full
                     if player.backpack.capacity() == player.backpack.max_capacity:
                         can_move = False
-                        print("You can't carry any more, so you can't go that way.")
+                        print_colour("You can't carry any more, so you can't go that way.", "red")
                     
                     # check if pickaxe can mine this item
                     elif mineral not in player.pickaxe.can_mine():
                         can_move = False
-                        print("Cannot mine this item, upgrade your pickaxe first!")
+                        print_colour("Cannot mine this item, upgrade your pickaxe first!", "red")
                     
                     else:
                         # can mine item
@@ -156,7 +166,7 @@ def enter_mine():
                         board.board[int(new_pos.real)][int(new_pos.imag)] = " "
 
                         print("---------------------------------------------------")
-                        print("You mined {quantity} piece(s) of {mineral}.".format(quantity=quantity, mineral=mineral))
+                        print_colour("You mined {quantity} piece(s) of {mineral}.".format(quantity=quantity, mineral=mineral), "green")
 
                         if quantity > player.backpack.remaining_capacity():
                             print("... but you can only carry {} more piece(s)!".format(player.backpack.remaining_capacity()))
@@ -181,7 +191,7 @@ def enter_mine():
 
             # use portal 
             if player.turns == 0:
-                print("You are exhausted.")
+                print_colour("You are exhausted.", "red")
                 use_portal()
                 if win:
                     main()
@@ -206,19 +216,27 @@ def enter_mine():
                 town(init=False)
         case "Q":
             main()
-        case _:
-            print("Invalid input")
+
 
 def town(init):
     if init:
         name = input("Greetings, miner! What is your name? ")
+        # input validation
+        while len(name) == 0:
+            name = input("Please enter a valid name: ")
+
         print("Pleased to meet you, {}. Welcome to Sundrop Town!".format(name))
         player.name = name
-        # TODO: INPUT VALIDATION FOR NAME
 
     show_town_menu()
 
     town_choice = input("Your choice? ").upper()
+
+    # input validation
+    while len(town_choice) == 0 or town_choice not in "BIMEVQ":
+       print_colour("Invalid input. Choice should be either (B), (I), (M), (E), (V), (Q)", "red")
+       town_choice = input("Your choice? ").upper() 
+
     match town_choice:
         case "B":
             # enter shop
@@ -239,7 +257,6 @@ def town(init):
             print("{:^51}".format("DAY " + str(player.day)))
             print("---------------------------------------------------")
             enter_mine() 
-
         case "V":
             # save game 
             save_game(SAVED_FILE_DIR)
@@ -247,12 +264,16 @@ def town(init):
             # go back to main menu 
             print()
             main()
-        case _:
-            return  
 
 def main():
     show_main_menu()
     choice = input("Your choice? ").upper()
+
+    # input validation
+    while len(choice) == 0 or choice not in "NLQ":
+        print_colour("Invalid input. Choice should be either (N), (L) or (Q).", "red")
+        choice = input("Your choice? ").upper() 
+
     match choice:
         case "N":
             # new game 
@@ -264,9 +285,6 @@ def main():
         case "Q":
             # exit game
             exit()
-        case _:
-            # invalid input 
-            return NotImplemented
 
 # introduction text
 print("---------------- Welcome to Sundrop Caves! ----------------")

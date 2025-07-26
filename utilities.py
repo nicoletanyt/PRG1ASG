@@ -1,5 +1,13 @@
 from random import randint
 
+# printing coloured statements
+def print_colour(line, colour):
+    match colour:
+        case "red":
+            print("\033[31m{}\033[0m".format(line))
+        case "green":
+            print("\033[32m{}\033[0m".format(line))
+
 class Pickaxe:
     pickaxe_price = [50, 150]
     minerals = ["copper", "silver", "gold"]
@@ -148,13 +156,13 @@ class Player:
             total += price * self.backpack.contents[mineral]
         
         sell_text += " for {} GP.".format(total)
-        print(sell_text)
+        print_colour(sell_text, "green")
 
         # update self
         self.GP += total
         self.backpack.contents = {}
 
-        print("You now have {} GP!".format(self.GP))
+        print_colour("You now have {} GP!".format(self.GP), "green")
         print()
 
 
