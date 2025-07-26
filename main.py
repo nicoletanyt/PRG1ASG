@@ -4,15 +4,14 @@ from utilities import Pickaxe, Backpack, Player, Map, print_colour
 import pickle
 
 # init objects
-backpack = Backpack()
-pickaxe = Pickaxe()
-player = Player(backpack, pickaxe)
+player = Player(Backpack(), Pickaxe())
 board = Map()
 board.load_map(filename="level1.txt")
 
 # define variables
 SAVED_FILE_DIR = "saved_games.pkl"
-win = False
+win = False 
+LIMIT = 10000
 
 def save_game(filename):
     # save the player and board objects using pickle 
@@ -30,12 +29,58 @@ def load_game(filename):
         player = game["player"]
         board = game["board"]
 
+def save_score():
+    # save top scores
+    file = open("top_scores.txt", "r+")
+    # type cast values to float
+    parsed_file = file.read().strip().split("\n")
+    scores = [float(i) for i in parsed_file if i != ""]
+
+    # calculate score
+    # use - day to reverse it such that fewer days are ranked higher
+    score = -(player.day * LIMIT + (LIMIT - player.steps) + (player.GP)/LIMIT)
+
+    scores.append(score)
+    
+    # sort the scores in highest to lowest (desc)
+    scores.sort(reverse=True)
+
+    # make sure writing starts at the start of file & erases file contents
+    file.seek(0)
+    file.truncate(0)
+
+    for i in scores:
+        # write each score on a new line
+        file.write(str(i) + "\n")
+
+    file.close()
+
+def show_scores():
+    # display top 5 scores
+    file = open("top_scores.txt", "r")
+    scores = file.read().strip().split("\n")
+    
+    # parse score
+    # format of score: -39989.0030 -> 3 is days, limit-steps is 9989, 30 is GP
+    # use limit-steps so that min steps in ranked higher
+    print("High Scores: ")
+    for i in range(len(scores)):
+        # type cast and * -1 to make it positive
+        curr = float(scores[i]) * -1
+
+        days = int(curr // LIMIT)
+        steps = LIMIT - int(curr % LIMIT)
+        gp = int(curr % 1 * LIMIT)
+        print("{}. Days: {}\tSteps: {}\tGP: {}".format(i + 1, days, steps, gp))
+    
+    print()
+    file.close()
 
 def show_main_menu():
     print("--- Main Menu ----")
     print("(N)ew game")
     print("(L)oad saved game")
-#    print("(H)igh scores")
+    print("(H)igh scores")
     print("(Q)uit")
     print("------------------")
 
@@ -52,10 +97,11 @@ def show_town_menu():
     print("------------------------")
 
 def show_shop_menu():
+    print()
     print("----------------------- Shop Menu -------------------------")
 
-    # if player.pickaxe.level < 3:
-        # print("(P)ickaxe upgrade to Level {} to mine silver ore for {} GP".format(player.pickaxe.level, player.pickaxe.upgrade_price()))
+    if player.pickaxe.level < 3:
+        print("(P)ickaxe upgrade to Level {} to mine {} ore for {} GP".format(player.pickaxe.level + 1, player.pickaxe.MINERALS[player.pickaxe.level], player.pickaxe.upgrade_price()))
 
     print("(B)ackpack upgrade to carry {capacity} items for {price} GP".format(capacity = player.backpack.max_capacity + 2, price=player.backpack.upgrade_price()))
 
@@ -70,19 +116,33 @@ def shop():
     shop_choice = input("Your choice? ").upper()
             
     # input validation
-    while len(shop_choice) == 0 or shop_choice not in "BL":
+    while len(shop_choice) == 0 or shop_choice not in "BLP":
        print_colour("Invalid input. Input should be either (B) or (L).", "red")
        shop_choice = input("Your choice? ").upper() 
 
     match shop_choice:
+        case "P":
+            # check if max level
+            if player.pickaxe.level == 3:
+                print_colour("Pickaxe is already at max level.", "red")
+            else:
+                # upgrade pickaxe 
+                if player.GP >= player.pickaxe.upgrade_price():
+                    player.GP -= player.pickaxe.upgrade_price()
+                    player.pickaxe.upgrade()
+                    print_colour("Congratulations! You can now mine {}!".format(player.pickaxe.can_mine()[-1]), "green")
+                else:
+                    print_colour("Insufficient GP.", "red")
+            shop()
+
         case "B":
             # can buy
             if player.GP >= player.backpack.upgrade_price():
                 player.GP -= player.backpack.upgrade_price() 
                 player.backpack.upgrade()
-                print("Congratulations! You can now carry {} items!".format(player.backpack.max_capacity))
+                print_colour("Congratulations! You can now carry {} items!".format(player.backpack.max_capacity), "green")
             else:
-                print("Insufficient GP.")
+                print_colour("Insufficient GP.", "red")
             shop()
 
         case "L":
@@ -100,6 +160,9 @@ def use_portal():
         if player.GP >= 500:
             global win
             win = True
+            # save the score
+            save_score()
+
             print("-------------------------------------------------------------")
             print_colour("Woo-hoo! Well done, {name}, you have {GP} GP!".format(name=player.name, GP=player.GP), "green")
             print("You now have enough to retire and play video games every day.")
@@ -169,7 +232,7 @@ def enter_mine():
                         print_colour("You mined {quantity} piece(s) of {mineral}.".format(quantity=quantity, mineral=mineral), "green")
 
                         if quantity > player.backpack.remaining_capacity():
-                            print("... but you can only carry {} more piece(s)!".format(player.backpack.remaining_capacity()))
+                            print_colour("... but you can only carry {} more piece(s)!".format(player.backpack.remaining_capacity()), "red")
                             quantity = player.backpack.remaining_capacity()
 
                         player.backpack.add(quantity, mineral)
@@ -270,12 +333,21 @@ def main():
     choice = input("Your choice? ").upper()
 
     # input validation
-    while len(choice) == 0 or choice not in "NLQ":
+    while len(choice) == 0 or choice not in "NLQH":
         print_colour("Invalid input. Choice should be either (N), (L) or (Q).", "red")
         choice = input("Your choice? ").upper() 
 
     match choice:
         case "N":
+            global win
+            if win:
+                # reinit everything 
+                win = False
+                global player, board
+                player = Player(Backpack(contents={}), Pickaxe())
+                board = Map()
+                board.load_map(filename="level1.txt")
+
             # new game 
             town(init=True)
         case "L":
@@ -285,6 +357,10 @@ def main():
         case "Q":
             # exit game
             exit()
+        case "H":
+           # view high scores
+            show_scores()
+            main()
 
 # introduction text
 print("---------------- Welcome to Sundrop Caves! ----------------")

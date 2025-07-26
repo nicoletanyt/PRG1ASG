@@ -9,19 +9,23 @@ def print_colour(line, colour):
             print("\033[32m{}\033[0m".format(line))
 
 class Pickaxe:
-    pickaxe_price = [50, 150]
-    minerals = ["copper", "silver", "gold"]
+    PICKAXE_PRICES = [50, 150]
+    MINERALS = ["copper", "silver", "gold"]
 
     def __init__(self, level=1):
         self.level = level
 
     def can_mine(self):
         # returns the items that it can mine 
-        return self.minerals[:self.level] 
+        return self.MINERALS[:self.level] 
+    
+    def upgrade_price(self):
+        return self.PICKAXE_PRICES[self.level - 1]
 
     def upgrade(self):
-        return NotImplemented 
-
+        # upgrade pickaxe and return the price 
+        self.level += 1
+        
     
 class Backpack:
     def __init__(self, contents={}, max_capacity=10):
@@ -35,7 +39,8 @@ class Backpack:
 
     def capacity(self):
         # returns the current capacity of the backpack
-        if len(self.contents) == 0:
+        if not self.contents:
+            # empty
             return 0
         return sum(self.contents.values())
     
@@ -59,7 +64,7 @@ class Player:
     # set town pos to (0, 0)
     TOWN_POS = 0 + 0j
 
-    def __init__(self, backpack: Backpack, pickaxe: Pickaxe, name="", pos = TOWN_POS, GP = 0, day = 1, steps = 0, turns = TURNS_PER_DAY, portal=None):
+    def __init__(self, backpack: Backpack, pickaxe: Pickaxe, name="", pos = TOWN_POS, GP = 500, day = 1, steps = 0, turns = TURNS_PER_DAY, portal=None):
         self.pos = pos
         self.backpack = backpack
         self.GP = GP
