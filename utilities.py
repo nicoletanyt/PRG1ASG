@@ -63,7 +63,6 @@ class Player:
         self.portal = portal
    
     def display_info(self, in_town):
-        print()
         print("----- Player Information -----")
         print("Name:", self.name)
         if in_town:

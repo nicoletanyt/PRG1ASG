@@ -7,6 +7,9 @@ player = Player(backpack, pickaxe)
 board = Map()
 board.load_map(filename="level1.txt")
 
+# define variables
+win = False
+
 def show_main_menu():
     print("--- Main Menu ----")
     print("(N)ew game")
@@ -68,6 +71,16 @@ def use_portal():
 
     if len(player.backpack.contents) > 0:
         player.sell()
+        # check for game win 
+        if player.GP >= 500:
+            global win
+            win = True
+            print("-------------------------------------------------------------")
+            print("Woo-hoo! Well done, {name}, you have {GP} GP!".format(name=player.name, GP=player.GP))
+            print("You now have enough to retire and play video games every day.")
+            print("And it only took you {days} days and {steps} steps! You win!".format(days=player.day, steps=player.steps))
+            print()
+            return
     else:
         print("You don't have anything to sell.")
 
@@ -151,7 +164,10 @@ def enter_mine():
             if player.turns == 0:
                 print("You are exhausted.")
                 use_portal()
-                town(init=False)
+                if win:
+                    main()
+                else:
+                    town(init=False)
             else:
                 enter_mine()
         case "M":
@@ -165,7 +181,10 @@ def enter_mine():
         case "P":
             # place a portal stone 
             use_portal()
-            town(init=False)
+            if win:
+                main()                
+            else:
+                town(init=False)
         case "Q":
             main()
         case _:
@@ -231,6 +250,6 @@ def main():
 print("---------------- Welcome to Sundrop Caves! ----------------")
 print("You spent all your money to get the deed to a mine, a small backpack, a simple pickaxe and a magical portal stone.")
 print()
-print("How quickly can you get the 1000 GP you need to retire and live happily ever after?")
+print("How quickly can you get the 500 GP you need to retire and live happily ever after?")
 print("-----------------------------------------------------------")
 main()
