@@ -6,11 +6,6 @@ class Pickaxe:
 
     def __init__(self, level=1):
         self.level = level
-    
-    # def max_mine(self):
-    #     # returns the highest mineral that it can mine
-    #     # TODO: SHOWS COPPER SILVER AND GOLD
-    #     return self.minerals[self.level - 1]
 
     def can_mine(self):
         # returns the items that it can mine 
@@ -27,17 +22,21 @@ class Backpack:
         self.max_capacity = max_capacity
     
     def remaining_capacity(self):
+        # returns the remaining capacity of the backpack
         return self.max_capacity - self.capacity()
 
     def capacity(self):
+        # returns the current capacity of the backpack
         if len(self.contents) == 0:
             return 0
         return sum(self.contents.values())
     
     def upgrade_price(self):
+        # return upgrade price of backpack
         return self.max_capacity * 2
 
     def upgrade(self):
+        # upgrade backpack capcity
         self.max_capacity += 2
 
     def add(self, quantity, mineral):
@@ -49,6 +48,7 @@ class Backpack:
 
 class Player:
     TURNS_PER_DAY = 20
+    # set town pos to (0, 0)
     TOWN_POS = 0 + 0j
 
     def __init__(self, backpack: Backpack, pickaxe: Pickaxe, name="", pos = TOWN_POS, GP = 0, day = 1, steps = 0, turns = TURNS_PER_DAY, portal=None):
@@ -66,6 +66,7 @@ class Player:
         print("----- Player Information -----")
         print("Name:", self.name)
         if in_town:
+            # display portal position if player info displayed in town
             if self.portal == None:
                 print("Portal Position: Not Placed")
             else:
@@ -220,7 +221,4 @@ class Map:
             print(row)
         # print borders 
         print("+" + "-" * self.width + "+")
-
-    def clear_fog(self):
-        return NotImplemented
 

@@ -1,4 +1,7 @@
+# Nicole Tan (IT01)
+
 from utilities import Pickaxe, Backpack, Player, Map
+import pickle
 
 # init objects
 backpack = Backpack()
@@ -8,7 +11,25 @@ board = Map()
 board.load_map(filename="level1.txt")
 
 # define variables
+SAVED_FILE_DIR = "saved_games.pkl"
 win = False
+
+def save_game(filename):
+    # save the player and board objects using pickle 
+    with open(filename, "wb") as f:
+        game = {"player": player, "board": board}
+        pickle.dump(game, f)
+
+    print("Game saved.")
+
+def load_game(filename):
+    # load the game and store it in variables
+    with open(filename, "rb") as f:
+        game = pickle.load(f)
+        global player, board
+        player = game["player"]
+        board = game["board"]
+
 
 def show_main_menu():
     print("--- Main Menu ----")
@@ -29,7 +50,6 @@ def show_town_menu():
     print("Sa(V)e game")
     print("(Q)uit to main menu")
     print("------------------------")
-
 
 def show_shop_menu():
     print("----------------------- Shop Menu -------------------------")
@@ -88,7 +108,6 @@ def use_portal():
     player.day += 1
     player.turns = player.TURNS_PER_DAY
     
-
 def enter_mine():
     print("DAY", player.day)
 
@@ -222,12 +241,14 @@ def town(init):
             enter_mine() 
 
         case "V":
-            return NotImplemented
+            # save game 
+            save_game(SAVED_FILE_DIR)
         case "Q":
-            return NotImplemented
+            # go back to main menu 
+            print()
+            main()
         case _:
             return  
-
 
 def main():
     show_main_menu()
@@ -238,7 +259,8 @@ def main():
             town(init=True)
         case "L":
             # load game
-            return NotImplemented
+            load_game(SAVED_FILE_DIR)
+            town(init=False)
         case "Q":
             # exit game
             exit()
@@ -246,7 +268,7 @@ def main():
             # invalid input 
             return NotImplemented
 
-# starting text
+# introduction text
 print("---------------- Welcome to Sundrop Caves! ----------------")
 print("You spent all your money to get the deed to a mine, a small backpack, a simple pickaxe and a magical portal stone.")
 print()
